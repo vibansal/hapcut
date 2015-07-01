@@ -59,7 +59,9 @@ int compare_read_INDEL(struct alignedread* read,VARIANT* varlist,int ss,int star
 		fprintf(stdout,"%s reference-indel-read %d-%d %s:%d:%s:%s %s\n",read->readid,start+l2,start+l2+clength,varlist[ss].chrom,varlist[ss].position-1,varlist[ss].allele1,varlist[ss].allele2,read->sequence);
 	}
 
-	a1 = strlen(varlist[ss].allele1); a2 = strlen(varlist[ss].allele2);
+	// clength = cigar operation length 30M -> limits comparison for long deletions....
+
+	a1 = strlen(varlist[ss].allele1); a2 = strlen(varlist[ss].allele2); // length of two alleles 
 	for (j=1;j<a1 && j+offset-1 < clength;j++) 
 	{ 
 		if (varlist[ss].allele1[j] != read->sequence[l1+j+offset-1] && read->sequence[l1+j+offset-1] != 'N') score1++; 

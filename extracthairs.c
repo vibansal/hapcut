@@ -47,7 +47,7 @@ int TRI_ALLELIC = 0;
 //int get_chrom_name(struct alignedread* read,HASHTABLE* ht,REFLIST* reflist);
 
 #include "parsebamread.c"
-#include "fosmidbam_hairs.c" // code for parsing fosmid pooled sequence data 
+#include "hapcut-fosmid/fosmidbam_hairs.c" // code for parsing fosmid pooled sequence data 
 
 //disabled sam file reading
 //#include "samhairs.c" // has two functions that handle sam file parsing 
@@ -72,8 +72,28 @@ void print_options()
 	fprintf(stderr,"--noquality <INTEGER> : if the bam file does not have quality string, this value will be used as the uniform quality value, default 0 \n");
 	//fprintf(stderr,"--triallelic <0/1> : print information about , default 0 \n");
 	fprintf(stderr,"--ref <FILENAME> : reference sequence file (in fasta format), optional but required for indels, should be indexed using samtools\n");
+	fprintf(stderr,"--mask <FILENAME> : reference sequence file (in fasta format) with mappability information (see http://lh3lh3.users.sourceforge.net/snpable.shtml), should be indexed using samtools\n");
 	fprintf(stderr,"--out <FILENAME> : output filename for haplotype fragments, if not provided, fragments will be output to stdout\n\n");
 	//fprintf(stderr,"--out : output file for haplotype informative fragments (hairs)\n\n");
+}
+
+
+int get_chrom_name(struct alignedread* read,HASHTABLE* ht,REFLIST* reflist)
+{
+        int i = read->tid;
+        if (reflist->ns > 0)
+        {
+                reflist->current = i;
+                if (i >= reflist->ns || i < 0 || strcmp(reflist->names[i],read->chrom) !=0)
+                {
+                        reflist->current = -1;
+                        for (i=0;i<reflist->ns;i++)
+                        {
+                                if (strcmp(reflist->names[i],read->chrom) ==0) { reflist->current = i; break; }
+                        }
+                }
+        }
+        return 1;
 }
 
 
@@ -188,8 +208,8 @@ int parse_bamfile_sorted(char* bamfile,HASHTABLE* ht,CHROMVARS* chromvars,VARIAN
 
 int main (int argc, char** argv)
 {
-	char samfile[1024]; char bamfile[1024]; char variantfile[1024]; char fastafile[1024];
-	strcpy(samfile,"None"); strcpy(bamfile,"None"); strcpy(variantfile,"None"); strcpy(fastafile,"None");
+	char samfile[1024]; char bamfile[1024]; char variantfile[1024]; char fastafile[1024]; char maskfile[1024];
+	strcpy(samfile,"None"); strcpy(bamfile,"None"); strcpy(variantfile,"None"); strcpy(fastafile,"None"); strcpy(maskfile,"None");
 	GROUPNAME = NULL;
 	int readsorted = 0;
 	char* sampleid = (char*)malloc(1024); sampleid[0] = '-'; sampleid[1] = '\0';
@@ -203,6 +223,7 @@ int main (int argc, char** argv)
 		if (strcmp(argv[i],"--bam") ==0 || strcmp(argv[i],"--bamfile") ==0)        bamfiles++; 
 		else if (strcmp(argv[i],"--variants") ==0)        strcpy(variantfile,argv[i+1]);
 		else if (strcmp(argv[i],"--reffile") ==0 || strcmp(argv[i],"--ref") ==0)        strcpy(fastafile,argv[i+1]);
+		else if (strcmp(argv[i],"--mask") ==0 || strcmp(argv[i],"--mappability") ==0)        strcpy(maskfile,argv[i+1]);
 		else if (strcmp(argv[i],"--VCF") ==0 || strcmp(argv[i],"--vcf") ==0)    {     strcpy(variantfile,argv[i+1]); VCFformat =1; }
 		else if (strcmp(argv[i],"--sorted") ==0)       readsorted = atoi(argv[i+1]);
 		else if (strcmp(argv[i],"--mbq") ==0)       MINQ = atoi(argv[i+1]);
@@ -220,6 +241,9 @@ int main (int argc, char** argv)
 		else if (strcmp(argv[i],"--noquality")==0) MISSING_QV = atoi(argv[i+1]);  
 		else if (strcmp(argv[i],"--triallelic")==0) TRI_ALLELIC = atoi(argv[i+1]);  
 		else if (strcmp(argv[i],"--fosmids") == 0 || strcmp(argv[i],"--fosmid") ==0) FOSMIDS = 1;
+		else if (strcmp(argv[i],"--fosmids") == 0 || strcmp(argv[i],"--fosmid") ==0) FOSMIDS = 1;
+		else if (strcmp(argv[i],"--prior") == 0) PRIOR = atoi(argv[i+1]); 
+		else if (strcmp(argv[i],"--comparephase") == 0 || strcmp(argv[i],"--compare") ==0) COMPARE_PHASE = atoi(argv[i+1]); 
 		else if (strcmp(argv[i],"--groupname") == 0) 
 		{
 			GROUPNAME = (char*)malloc(1024); strcpy(GROUPNAME,argv[i+1]); 
@@ -276,12 +300,20 @@ int main (int argc, char** argv)
 		if (read_fastaheader(fastafile,reflist) > 0) 
 		{
 			reflist->sequences = calloc(reflist->ns,sizeof(char*)); //(char**)malloc(sizeof(char*)*reflist->ns);
-			for (i=0;i<reflist->ns;i++)
+			if (FOSMIDS ==0)
 			{
-				reflist->sequences[i] = calloc(reflist->lengths[i]+1,sizeof(char));
-				if (i < 5) fprintf(stderr,"contig %s length %d\n",reflist->names[i],reflist->lengths[i]);
+				for (i=0;i<reflist->ns;i++)
+				{
+					reflist->sequences[i] = calloc(reflist->lengths[i]+1,sizeof(char));
+					if (i < 5) fprintf(stderr,"contig %s length %d\n",reflist->names[i],reflist->lengths[i]);
+				}
+				read_fasta(fastafile,reflist);
 			}
-			read_fasta(fastafile,reflist);
+			else // 10.27.14 new code to read one chromosome at a time 
+			{
+				fprintf(stderr,"opening fasta file %s \n",fastafile);
+				reflist->fp = fopen(fastafile,"r");
+			}
 		}
 	}
 	//return 1;
@@ -290,7 +322,7 @@ int main (int argc, char** argv)
 		for (i=0;i<bamfiles;i++) 
 		{
 			if (FOSMIDS ==0) parse_bamfile_sorted(bamfilelist[i],&ht,chromvars,varlist,reflist);
-			else parse_bamfile_fosmid(bamfilelist[i],&ht,chromvars,varlist,reflist); // fosmid pool bam file 
+			else parse_bamfile_fosmid(bamfilelist[i],&ht,chromvars,varlist,reflist,maskfile); // fosmid pool bam file 
 		}
 	}
 	if (logfile != NULL) fclose(logfile);

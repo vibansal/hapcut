@@ -9,10 +9,10 @@ int count_variants(char* vcffile,char* sampleid,int* samplecol)
 {
 	FILE* fp = fopen(vcffile,"r"); 
 	if (fp == NULL) { fprintf(stderr,"could not open file %s\n\n",vcffile); return -1; }
-	int variants =0; char buffer[100000];
+	int variants =0; char buffer[1000000];
 	int i=0,j=0,cols=0;
 
-	while (fgets(buffer,100000,fp))
+	while (fgets(buffer,1000000,fp))
 	{
 		if (buffer[0] != '#') variants++; // this should work for non-VCF files as well.
 		else if (buffer[0] == '#' && buffer[1] == '#') continue; 
@@ -113,7 +113,7 @@ int parse_variant(VARIANT* variant, char* buffer,int samplecol)
 	{
 		//if (flag >0) fprintf(stderr,"%s %d %s %s \n",variant->chrom,variant->position,variant->allele1,variant->allele2); 
 		variant->heterozygous = '1'; // variant will be used for outputting hairs
-		//fprintf(stdout,"variant %s %s %s %c\n",variant->allele1,variant->allele2,variant->genotype,variant->heterozygous);
+		//fprintf(stdout,"variant %d len %d %s %c\n",variant->position,strlen(variant->allele1),variant->genotype,variant->heterozygous);
 		return 1;
 	}
 	if ( (variant->genotype[0] =='0' && variant->genotype[2] == '2') || (variant->genotype[0] =='2' && variant->genotype[2] == '0')) 

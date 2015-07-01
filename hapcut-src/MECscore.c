@@ -26,7 +26,7 @@ float edge_weight(char* hap,int i, int j, char* p,struct fragment* Flist,int f)
 int mecscore(struct fragment* Flist,int fragments, char* h,float* ll, float* calls,float* miscalls)
 {
 	//	fprintf(stderr,"QVoffset is now %d \n",QVoffset);
-	int j=0,k=0,f=0; *ll =0; float p0,p1; *calls =0; *miscalls=0; float prob; float prob1;
+	int j=0,k=0,f=0; *ll =0; float p0,p1; *calls =0; *miscalls=0; float prob; float prob1; float prob2;
 	float good=0,bad=0; int switches =0; int m=0; 
 	for (f=0;f<fragments;f++)	
 	{
@@ -41,7 +41,7 @@ int mecscore(struct fragment* Flist,int fragments, char* h,float* ll, float* cal
 			{
 				if (h[Flist[f].list[j].offset+k] == '-' ) continue;
 				if ((int)Flist[f].list[j].qv[k] -QVoffset < MINQ) continue; 
-				prob = QVoffset-(int)Flist[f].list[j].qv[k]; prob /= 10; prob1 = 1.0; prob1 -= pow(10,prob);
+				prob = QVoffset-(int)Flist[f].list[j].qv[k]; prob /= 10; prob1 = 1.0 - pow(10,prob); prob2 = log10(prob1); // changed 03/03/15 
 				
 				//if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) good +=1; else bad +=1;
 				if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) good +=prob1; else bad +=prob1;
@@ -55,8 +55,8 @@ int mecscore(struct fragment* Flist,int fragments, char* h,float* ll, float* cal
 				}
 				prob1 = log10(prob1);
 				//printf("prob %s %f %f \n",Flist[f].list[j].qv,prob,prob1); 
-				if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) { p0 += prob1; p1 +=  prob; }
-				else { p0 += prob; p1 += prob1; }
+				if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) { p0 += prob2; p1 +=  prob; }
+				else { p0 += prob; p1 += prob2; }
 			}
 		}
 		if (SCORING_FUNCTION==0) 
@@ -78,7 +78,7 @@ int mecscore(struct fragment* Flist,int fragments, char* h,float* ll, float* cal
 
 void update_fragscore(struct fragment* Flist,int f, char* h)
 {
-	int j=0,k=0; float p0=0,p1=0,prob =0,prob1=0;
+	int j=0,k=0; float p0=0,p1=0,prob =0,prob1=0,prob2=0;
 	Flist[f].calls =0;
 	float good=0,bad=0; int switches =0; int m=0; 
 	if (h[Flist[f].list[0].offset] == Flist[f].list[0].hap[0]) m = 1; else m = -1;  // initialize 
@@ -89,11 +89,11 @@ void update_fragscore(struct fragment* Flist,int f, char* h)
 		{
 			if (h[Flist[f].list[j].offset+k] == '-') continue;// { fprintf(stdout,"fragment error"); continue;}
 			if ((int)Flist[f].list[j].qv[k] -QVoffset < MINQ) continue; 
-			prob = QVoffset-(int)Flist[f].list[j].qv[k]; prob /= 10; prob1 = 1.0; prob1 -= pow(10,prob);
+			prob = QVoffset-(int)Flist[f].list[j].qv[k]; prob /= 10; prob1 = 1.0; prob1 -= pow(10,prob); prob2 = log10(prob1);
 			if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) good +=prob1; else bad +=prob1; 
 			//if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) good++; else bad++;
-			if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) { p0 += prob1; p1 +=  prob; }
-			else { p0 += prob; p1 += prob1; }
+			if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) { p0 += prob2; p1 +=  prob; }
+			else { p0 += prob; p1 += prob2; }
 			if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k] && m == -1)
 			{
 				m = 1; switches++;

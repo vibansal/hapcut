@@ -144,6 +144,7 @@ float compute_goodcut(struct SNPfrags* snpfrag,char* hap,int* slist,int N,struct
 				snpfrag[slist[i]].telist[snpfrag[slist[i]].tedges].snp = snpfrag[slist[i]].elist[j].snp; 
 				k = snpfrag[slist[i]].elist[j].snp; 
 				W = (float)edge_weight(hap,slist[i],k,snpfrag[slist[i]].elist[j].p,Flist,snpfrag[slist[i]].elist[j].frag);
+				//fprintf(stderr,"weight %d %d hap %c%c alleles %c%c W %f \n",slist[i],k,snpfrag[slist[i]].elist[j].p[0],snpfrag[slist[i]].elist[j].p[1],hap[slist[i]],hap[k],W);
 				if (wf ==0) W /= Flist[snpfrag[slist[i]].elist[j].frag].calls-1; //(fraglength(Flist,snpfrag[slist[i]].elist[j].frag)-1);	
 				snpfrag[slist[i]].telist[snpfrag[slist[i]].tedges].w = W; 
 				snpfrag[slist[i]].tedges++;  totaledges++;
@@ -158,7 +159,7 @@ float compute_goodcut(struct SNPfrags* snpfrag,char* hap,int* slist,int N,struct
 	}
 	/* CODE TO set up the read-haplotype consistency graph */
 
-	/* CODE TO find 'K' biggest edges in MEC graph  */
+	/* CODE TO find 'K' biggest edges in MEC graph, negative weight edges in graph  */
 	int K = 5; int smallest = 0; float smallw=1000;
 	if (totaledges/2 < K) K = totaledges/2;
 	EDGE* edgelist = (EDGE*)malloc(sizeof(EDGE)*K); j=0; i= 0; k= 0;

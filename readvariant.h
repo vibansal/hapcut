@@ -67,4 +67,6 @@ void build_intervalmap(CHROMVARS* chromvars,int chromosomes,VARIANT* varlist,int
 
 int calculate_rightshift(VARIANT* varlist,int ss,REFLIST* reflist);
 
+//int get_chrom_name(struct alignedread* read,HASHTABLE* ht,REFLIST* reflist);
+
 #endif

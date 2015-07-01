@@ -107,6 +107,26 @@ int read_fastaheader(char* fastafile,REFLIST* reflist) // assumed to be referenc
 }
 
 // new function that reads the chromosome 'chrom' directly from fasta file using seek
+int read_chromosome_mask(REFLIST* reflist,int chrom,FILE* fp)
+{
+	fseek(fp,reflist->offsets[chrom],SEEK_SET); 
+	fprintf(stderr,"reading chromosome %s offset %ld ",reflist->names[chrom],reflist->offsets[chrom]);
+	if (reflist->lengths[chrom] <1) { fprintf(stderr,"size of chromosome is too small,error length %d\n",reflist->lengths[chrom]); return -1; } 
+	reflist->sequences[chrom] = (unsigned char*)malloc(reflist->lengths[chrom]+1); 
+	int j=0,i=0,k=0,bases=0; 
+	char c = fgetc(fp); 
+	while (bases <reflist->lengths[chrom])
+	{
+		if (c != '\n' && c != '\t' && c != ' ')
+		{
+			reflist->sequences[chrom][j] = c; j++;
+			bases++;
+		}
+		c = fgetc(fp);	
+	}
+}
+
+// new function that reads the chromosome 'chrom' directly from fasta file using seek
 int read_chromosome(REFLIST* reflist,int chrom,FILE* fp)
 {
 	fseek(fp,reflist->offsets[chrom],SEEK_SET); 

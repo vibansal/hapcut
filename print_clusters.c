@@ -1,21 +1,5 @@
 
-int get_chrom_name(struct alignedread* read,HASHTABLE* ht,REFLIST* reflist)
-{
-        int i = read->tid;
-        if (reflist->ns > 0)
-        {
-                reflist->current = i;
-                if (i >= reflist->ns || i < 0 || strcmp(reflist->names[i],read->chrom) !=0)
-                {
-                        reflist->current = -1;
-                        for (i=0;i<reflist->ns;i++)
-                        {
-                                if (strcmp(reflist->names[i],read->chrom) ==0) { reflist->current = i; break; }
-                        }
-                }
-        }
-        return 1;
-}
+// functions used for parsing long-fragment (dilution-pool) sequence data 
 
 
 // find mate in readlist and also identify PCR duplicates
@@ -89,9 +73,28 @@ int estimate_readdistance_distribution(struct alignedread** readlist,int s,int e
 	}
 }
 
-int generate_single_fragment(struct alignedread** readlist, int s,int e,int length,double read_density,FRAGMENT* flist,VARIANT* varlist)
+
+void print_fragment_vars(FRAGMENT* fragment,VARIANT* varlist)
 {
+	int i=0,j=0;
+	for (i=0;i<fragment->variants;i++)
+	{
+		j = fragment->alist[i].varid;
+		if (i==0 || j != fragment->alist[i-1].varid) fprintf(stdout,"\n %d:%d %s/%s %c:%d | ",j,varlist[j].position,varlist[j].allele1,varlist[j].allele2,fragment->alist[i].allele,fragment->alist[i].qv-QVoffset);
+		else if (fragment->alist[i].allele != fragment->alist[i-1].allele) fprintf(stdout,"%c:%d:HET | ",fragment->alist[i].allele,fragment->alist[i].qv-QVoffset);
+		else fprintf(stdout,"%c:%d | ",fragment->alist[i].allele,fragment->alist[i].qv-QVoffset);
+	}
+	fprintf(stdout,"\n");
+}
+
+int generate_single_fragment(struct alignedread** readlist,FRAGMENT* flist,VARIANT* varlist,struct FOSMID* fosmid)
+{
+	int s = fosmid->firstread; int e = fosmid->lastread; int length = fosmid->ws; int reads_window = fosmid->reads; 
+	double read_density = fosmid->mean; 
+
+
 	int j=0,i=0,k=0;
+	int unique_variants =1; int hets=0; int counts[4]; int qv=0;
 	FRAGMENT fragment; fragment.variants =0; fragment.alist = (allele*)malloc(sizeof(allele)*4096);
 	for (k=s;k<e;k++)
 	{
@@ -120,16 +123,24 @@ int generate_single_fragment(struct alignedread** readlist, int s,int e,int leng
 		}
 	}
 
-	int unique_variants =1; int hets=0; int counts[4]; int qv=0;
-	qsort(fragment.alist,fragment.variants,sizeof(allele),compare_alleles);
-	for (i=0;i<fragment.variants;i++)
+	// even if there are two variants covered, it could be a single variant covered twice... so sort list and check
+	if (fragment.variants > 2) qsort(fragment.alist,fragment.variants,sizeof(allele),compare_alleles); 
+	unique_variants = 0; if (fragment.variants > 0) unique_variants = 1; 
+	for (i=1;i<fragment.variants;i++)
 	{
 		j = fragment.alist[i].varid;
 		if (i > 0 && fragment.alist[i].varid != fragment.alist[i-1].varid) unique_variants++;
 		if (i > 0 && j == fragment.alist[i-1].varid && fragment.alist[i].allele != fragment.alist[i-1].allele) hets++;
 	}
+	fosmid->hets = hets; fosmid->unique_variants = unique_variants; 
+
 	if (hets >=2 || hets*3 >= unique_variants || unique_variants < 2)  // fragment only has single variant or has 2 or more heterzygous variants 
 	{
+		// such fragments need to be printed in output for debugging and to tag chimeric ones... 
+		fprintf(fragment_file,"#0 -:%d_%d_%d_%0.2f_%d",readlist[s]->position,readlist[e-1]->position,length,read_density,reads_window);
+		if (unique_variants < 2) fprintf(fragment_file," vars:%d no-info\n",unique_variants);
+		else fprintf(fragment_file," vars:%d hets:%d\n",unique_variants,hets);
+		if (unique_variants >= 2) print_fragment_vars(&fragment,varlist); 
 		free(fragment.alist);
 		return 0; 
 	}
@@ -174,8 +185,8 @@ int generate_single_fragment(struct alignedread** readlist, int s,int e,int leng
 	fprintf(stdout,"fragment %d %d \n",unique_variants,j);
 	fp.id = (char*)malloc(1024); 
 	//if (GROUPNAME != NULL) sprintf(fp.id,"%s:%s:%d_%d_%d_%0.1f",GROUPNAME,varlist[fp.alist[0].varid].chrom,readlist[s].position,readlist[e-1].position,length,read_density);
-	//else sprintf(fp.id,"%s:%d_%d_%d_%0.1f",varlist[fp.alist[0].varid].chrom,readlist[s].position,readlist[e-1].position,length,read_density);
-	sprintf(fp.id,"%s:%d_%d_%d_%0.1f",varlist[fp.alist[0].varid].chrom,readlist[s]->position,readlist[e-1]->position,length,read_density);
+	//else sprintf(fp.id,"%s:%d_%d_%d_%0.2f",varlist[fp.alist[0].varid].chrom,readlist[s].position,readlist[e-1].position,length,read_density);
+	sprintf(fp.id,"%s:%d_%d_%d_%0.2f_%d",varlist[fp.alist[0].varid].chrom,readlist[s]->position,readlist[e-1]->position,length,read_density,reads_window);
 	
 	fp.variants = j; 
 	if (j >=2) 
@@ -186,15 +197,8 @@ int generate_single_fragment(struct alignedread** readlist, int s,int e,int leng
 		print_fragment(&fp,varlist,fragment_file);
 	}
 	free(fp.alist); free(fp.id);
+	print_fragment_vars(&fragment,varlist); 
 
-	for (i=0;i<fragment.variants;i++)
-	{
-		j = fragment.alist[i].varid;
-		if (i==0 || j != fragment.alist[i-1].varid) fprintf(stdout,"\n %d:%d %s/%s %c:%d | ",j,varlist[j].position,varlist[j].allele1,varlist[j].allele2,fragment.alist[i].allele,fragment.alist[i].qv-33);
-		else if (fragment.alist[i].allele != fragment.alist[i-1].allele) fprintf(stdout,"%c:%d:HET | ",fragment.alist[i].allele,fragment.alist[i].qv-33);
-		else fprintf(stdout,"%c:%d | ",fragment.alist[i].allele,fragment.alist[i].qv-33);
-	}
-	fprintf(stdout,"\n");
 	free(fragment.alist); return 1;
 }
 
