@@ -9,6 +9,7 @@ all:
 	$(MAKE) -C samtools-0.1.18 
 	$(MAKE) -C . hairs
 	$(MAKE) -C hapcut-src HAPCUT
+	cp hapcut-src/HAPCUT .;
 
 
 hairs: bamread.o hashtable.o readvariant.o readfasta.o hapfragments.o extracthairs.c 
@@ -39,4 +40,4 @@ readfasta.o: readfasta.c readfasta.h
 	$(CC) -c readfasta.c
 
 clean:
-	rm -f bamread.o readfasta.o readvariant.o hapfragment.o hashtable.o extractHAIRS extractFOSMID hapcut-src/HAPCUT
+	rm -f bamread.o readfasta.o readvariant.o hapfragment.o hashtable.o extractHAIRS extractFOSMID hapcut-src/HAPCUT HAPCUT
