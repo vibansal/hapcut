@@ -47,7 +47,7 @@ int TRI_ALLELIC = 0;
 //int get_chrom_name(struct alignedread* read,HASHTABLE* ht,REFLIST* reflist);
 
 #include "parsebamread.c"
-#include "hapcut-fosmid/fosmidbam_hairs.c" // code for parsing fosmid pooled sequence data 
+//#include "hapcut-fosmid/fosmidbam_hairs.c" // code for parsing fosmid pooled sequence data 
 
 //disabled sam file reading
 //#include "samhairs.c" // has two functions that handle sam file parsing 
@@ -240,10 +240,9 @@ int main (int argc, char** argv)
 		else if (strcmp(argv[i],"--maxfragments")==0) MAXFRAG = atoi(argv[i+1]);  
 		else if (strcmp(argv[i],"--noquality")==0) MISSING_QV = atoi(argv[i+1]);  
 		else if (strcmp(argv[i],"--triallelic")==0) TRI_ALLELIC = atoi(argv[i+1]);  
-		else if (strcmp(argv[i],"--fosmids") == 0 || strcmp(argv[i],"--fosmid") ==0) FOSMIDS = 1;
-		else if (strcmp(argv[i],"--fosmids") == 0 || strcmp(argv[i],"--fosmid") ==0) FOSMIDS = 1;
-		else if (strcmp(argv[i],"--prior") == 0) PRIOR = atoi(argv[i+1]); 
-		else if (strcmp(argv[i],"--comparephase") == 0 || strcmp(argv[i],"--compare") ==0) COMPARE_PHASE = atoi(argv[i+1]); 
+		//else if (strcmp(argv[i],"--fosmids") == 0 || strcmp(argv[i],"--fosmid") ==0) FOSMIDS = 1;
+		//else if (strcmp(argv[i],"--prior") == 0) PRIOR = atoi(argv[i+1]); 
+		//else if (strcmp(argv[i],"--comparephase") == 0 || strcmp(argv[i],"--compare") ==0) COMPARE_PHASE = atoi(argv[i+1]); 
 		else if (strcmp(argv[i],"--groupname") == 0) 
 		{
 			GROUPNAME = (char*)malloc(1024); strcpy(GROUPNAME,argv[i+1]); 
@@ -322,7 +321,7 @@ int main (int argc, char** argv)
 		for (i=0;i<bamfiles;i++) 
 		{
 			if (FOSMIDS ==0) parse_bamfile_sorted(bamfilelist[i],&ht,chromvars,varlist,reflist);
-			else parse_bamfile_fosmid(bamfilelist[i],&ht,chromvars,varlist,reflist,maskfile); // fosmid pool bam file 
+			//else parse_bamfile_fosmid(bamfilelist[i],&ht,chromvars,varlist,reflist,maskfile); // fosmid pool bam file 
 		}
 	}
 	if (logfile != NULL) fclose(logfile);
