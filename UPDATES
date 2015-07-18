@@ -1,3 +1,12 @@
+
+July 2015 
+
+reorganized code: (1) extracthairs.c code is in separate directory 'parsebam' 
+	          (2) samtools-0.1.18 source code is part of repository to make it easy to compile code 
+		  
+code can be compiled by 'make all' in main HapCUT directory 
+
+
 March 26 2014
 
 New version (0.7) available that is able to process PacBio data and tri-allelic variants. For PacBio data, quality values are sometimes not available
