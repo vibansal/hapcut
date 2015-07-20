@@ -1,6 +1,0 @@
-[submodule "samtools"]
-	path = samtools
-	url = https://github.com/vibansal/NGS_shared/samtools
-[submodule "NGS_shared"]
-	path = NGS_shared
-	url = https://github.com/vibansal/NGS_shared.git
