@@ -148,7 +148,11 @@ int maxcut_haplotyping(char* fragmentfile,char* variantfile,int snps,char* outpu
 			print_hapfile(clist,components,HAP1,Flist,fragments,snpfrag,variantfile,miscalls,fn);   
 			
 			// do this only if some option is specified 
-			if (PRINT_FRAGMENT_SCORES ==1) print_fragmentmatrix_MEC(Flist,fragments,HAP1,outputfile);
+			if (PRINT_FRAGMENT_SCORES ==1) 
+			{
+				print_fragmentmatrix_MEC(Flist,fragments,HAP1,outputfile);
+				print_matrix(clist,components,HAP1,Flist,outputfile);
+			}
 		
 		}
 
@@ -218,10 +222,11 @@ int main(int argc, char** argv)
 		}
 		else if (strcmp(argv[i],"--QVoffset") ==0 || strcmp(argv[i],"--qvoffset") ==0)        QVoffset = atoi(argv[i+1]);
 		else if (strcmp(argv[i],"--maxmem") ==0 )        MAX_MEMORY = atoi(argv[i+1]);
+		else if (strcmp(argv[i],"--mbq") ==0 )        MINQ = atoi(argv[i+1]);
 	}
 	if (flag !=3) // three essential arguments are not supplied 
 	{ 
-		print_hapcut_options(); return 0;
+		print_hapcut_options(); return -1;
 	}
 	else
 	{
@@ -236,7 +241,7 @@ int main(int argc, char** argv)
 			maxcut_haplotyping(fragfile,varfile,0,hapfile,maxiter); 
 		}
 	}
-	return 1;
+	return 0;
 }
 
 
