@@ -151,7 +151,7 @@ int maxcut_haplotyping(char* fragmentfile,char* variantfile,int snps,char* outpu
 			if (PRINT_FRAGMENT_SCORES ==1) 
 			{
 				print_fragmentmatrix_MEC(Flist,fragments,HAP1,outputfile);
-				print_matrix(clist,components,HAP1,Flist,outputfile);
+				//print_matrix(clist,components,HAP1,Flist,outputfile);
 			}
 		
 		}
