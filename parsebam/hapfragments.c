@@ -111,7 +111,7 @@ int print_matepair(FRAGMENT* f1, FRAGMENT* f2,VARIANT* varlist,FILE* outfile)
 void clean_fragmentlist(FRAGMENT* flist,int* fragments,VARIANT* varlist,int currchrom,int currpos,int prevchrom)
 {			
 	int i=0,j=0,k=0,first=0,sl=0;
-	FRAGMENT fragment; fragment.variants =0; fragment.alist = (allele*)malloc(sizeof(allele)*1000);
+	FRAGMENT fragment; fragment.variants =0; fragment.alist = (allele*)malloc(sizeof(allele)*4096);
 	if (*fragments > 1) qsort(flist,*fragments,sizeof(FRAGMENT),compare_fragments);
 	// sort such that mate pairs are together and reverse sorted by starting position of second read in a mate-piar
 	//for (i=0;i<*fragments;i++) fprintf(stdout,"frag %s %d vars %d \n",flist[i].id,flist[i].alist[0].varid,flist[i].variants);
