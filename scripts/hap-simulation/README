@@ -1,0 +1,45 @@
+Author: Vikas Bansal (vbansal@scripps.edu), last modified Sept 30, 2015
+----------------------------------------------------------------------------------------------------
+
+Program for estimating N50 haplotype length using simulated paired-end or single end reads. Program allows paired-end reads with an arbitrary number of insert libraries. 
+
+Input Format:
+----------------
+
+gcc -o hapassembly-simulator haplotypeassembly-simulator.c -lm 
+
+./hapassembly-simulator FILE.SNPlocations totalcoverage RL1 IS1 COV1 RL2 IS2 COV2 ......
+
+
+Input Parameters:
+----------------
+
+File.SNPlocations: File with locations of heterozygous SNPs on a chromosome (snplocations.gz is a file taken from NA19240 chromosome 1)
+
+RL1: readlength (bp) for first paired-end library
+IS1: mean insert size (bp) for first paired-end library 
+COV1: coverage (physical) for first paired-end library 
+
+RL2: readlength (bp) for second paired-end library
+IS2: mean insert size (bp) for second paired-end library 
+COV2: coverage (physical) for second paired-end library 
+
+To simulate single-end reads, set the insert size to 0.
+ 
+
+Output:
+--------
+The program outputs one line for each simulation that contains summary statistics for the haplotype assembly. The values prior to "###" represent the input parameters. 
+
+N50_vars: the N50 of the haplotype assembly in terms of variants per connected component
+N50_span: the N50 of the haplotype assembly in terms of physical span of each component
+
+
+RL 150 IS 2000 cov 18 RL 100 IS 5000 cov 18 RL 100 IS 10000 cov 144 ### totalcoverage 180 N50_vars   332 N50_span 323602 N50_adjustedspan 324240 components   1429 phasedvariants 162059  adjustedGS 178350174.000000 spanGS 180077777.000000 actualsize 247190718 variantGS 163762
+
+
+#########################################
+UPDATES 
+#########################################
+
+09/30/2015: fixed seg fault for very large insert sizes 
