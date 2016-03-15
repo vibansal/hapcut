@@ -4,7 +4,7 @@ CC=gcc -D_GNU_SOURCE
 CFLAGS=-c -Wall
 SAMTOOLS=samtools-0.1.18
 
-hairs: bamread.o hashtable.o readvariant.o readfasta.o hapfragments.o extracthairs.c 
+hairs: bamread.o hashtable.o readvariant.o readfasta.o hapfragments.o extracthairs.c parsebamread.c
 	$(CC) -I$(SAMTOOLS) -g -O2 bamread.o hapfragments.o hashtable.o readfasta.o readvariant.o -o extractHAIRS extracthairs.c  -L$(SAMTOOLS) -lbam -lm -lz
 
 ancestry: bamread.o hashtable.o readvariant.o readfasta.o hapfragments.o calculateGLL.c 

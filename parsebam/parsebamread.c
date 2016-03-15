@@ -24,18 +24,33 @@ int compare_read_SNP(struct alignedread* read,VARIANT* varlist,int ss,int start,
 		if (read->mquality < (int)read->quality[l1+offset]-QVoffset) fragment->alist[fragment->variants].qv = (char)(read->mquality+QVoffset);
 		else fragment->alist[fragment->variants].qv = read->quality[l1+offset];
 		fragment->variants++;
-		varlist[ss].depth++; 
-		if (match == '0') 
+
+		if (!(read->flag & 1024)) // do not update allele counts for duplicate marked reads 02/22/2016 
 		{
-			if ((read->flag & 16) == 16) varlist[ss].A1 += 1<<16; else varlist[ss].A1 += 1; 
-		}
-		else // match == '1'
-		{
-			if ((read->flag & 16) == 16) varlist[ss].A2 += 1<<16; else varlist[ss].A2 += 1;
+			varlist[ss].depth++; 
+			if (match == '0') 
+			{
+				if ((read->flag & 16) == 16) varlist[ss].A1 += 1<<16; else varlist[ss].A1 += 1; 
+			}
+			else // match == '1'
+			{
+				if ((read->flag & 16) == 16) varlist[ss].A2 += 1<<16; else varlist[ss].A2 += 1;
+			}
 		}
 		if (TRI_ALLELIC ==1 && varlist[ss].heterozygous == '2') fprintf(stderr,"comparing read %s to non-ref-het SNP %d:%d %s %s | allele = %c\n",read->readid,ss+1,varlist[ss].position,varlist[ss].allele1,varlist[ss].allele2,match);
 		return 1;
 	} 
+	#ifdef OUTPUT_THIRD_ALLELE // added only for PCR duplication analysis 02/26/16 
+		if (match == '-' && read->quality[l1+offset]-QVoffset >= MINQ && varlist[ss].type ==0 && strlen(varlist[ss].allele1) == 1) 
+		{
+			fragment->alist[fragment->variants].varid = ss; fragment->alist[fragment->variants].allele = '?';
+			//assign base quality to be minimum of base quality and mapping quality 
+			if (read->mquality < (int)read->quality[l1+offset]-QVoffset) fragment->alist[fragment->variants].qv = (char)(read->mquality+QVoffset);
+			else fragment->alist[fragment->variants].qv = read->quality[l1+offset];
+			fragment->variants++;
+			// special case for allele which does not match the two variant allelles 
+		}
+	#endif 
 	return 0;
 	//printf("allele %s %d %c/%c %c %c %d\t",varlist[ss].chrom,varlist[ss].position,varlist[ss].allele1,varlist[ss].allele2,read->sequence[l1+offset],read->quality[l1+offset],offset);
 }
@@ -193,14 +208,17 @@ int compare_read_INDEL(struct alignedread* read,VARIANT* varlist,int ss,int star
                 //if (read->quality[l1+offset] < fragment->alist[fragment->variants].qv) fragment->alist[fragment->variants].qv = read->quality[l1+offset];
                 if (allele ==0) fragment->alist[fragment->variants].allele = '0'; 
                 else if (allele ==1) fragment->alist[fragment->variants].allele = '1'; 
-                varlist[ss].depth++; 
-		if (allele ==0) 
+		if (!(read->flag & 1024)) // do not update allele counts for duplicate marked reads 02/22/2016 
 		{
-			if ((read->flag & 16) == 16) varlist[ss].A1 += 1<<16; else varlist[ss].A1 += 1; 
-		}
-		else if (allele ==1) 
-		{
-			if ((read->flag & 16) == 16) varlist[ss].A2 += 1<<16; else varlist[ss].A2 += 1; 
+			varlist[ss].depth++; 
+			if (allele ==0) 
+			{
+				if ((read->flag & 16) == 16) varlist[ss].A1 += 1<<16; else varlist[ss].A1 += 1; 
+			}
+			else if (allele ==1) 
+			{
+				if ((read->flag & 16) == 16) varlist[ss].A2 += 1<<16; else varlist[ss].A2 += 1; 
+			}
 		}
                 fragment->variants++;
 	} 
@@ -243,7 +261,7 @@ int extract_variants_read(struct alignedread* read,HASHTABLE* ht,CHROMVARS* chro
 		//fprintf(stdout,"%c %d \t",(char)read->cigarlist[i+1],read->cigarlist[i]); 
 		while (varlist[ss].position < start + l2 && ss <= chromvars[chrom].last) ss++; 
 		op = read->cigarlist[i]&0xf; ol = read->cigarlist[i]>>4;
-		if (op == BAM_CMATCH)
+		if (op == BAM_CMATCH || op == BAM_CEQUAL || op == BAM_CDIFF)
 		{
 			while (varlist[ss].position >= start+l2 && varlist[ss].position < start+l2 + ol && ss <= chromvars[chrom].last)
 			{
