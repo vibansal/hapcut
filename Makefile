@@ -1,7 +1,7 @@
 
 #CC=gcc -Wall
 CC=gcc -D_GNU_SOURCE
-CFLAGS=-c -Wall
+CFLAGS=-c -Wall -lz
 SAMTOOLS=parsebam/samtools-0.1.18
 
 all:	
