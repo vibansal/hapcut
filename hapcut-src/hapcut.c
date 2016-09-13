@@ -233,12 +233,12 @@ int main(int argc, char** argv)
 		if (VCFformat ==1) 
 		{
 			fprintf(stderr,"\n\nfragment file: %s\nvariantfile (VCF format):%s\nhaplotypes will be output to file: %s\niterations of maxcut algorithm: %d\nQVoffset: %d\n\n",fragfile,VCFfile,hapfile,maxiter,QVoffset); 	
-			maxcut_haplotyping(fragfile,VCFfile,0,hapfile,maxiter); 
+			if (maxcut_haplotyping(fragfile,VCFfile,0,hapfile,maxiter) < 0) return -1; 
 		}
 		else 
 		{
 			fprintf(stderr,"\n\nfragment file: %s\nvariantfile (variant format):%s\nhaplotypes will be output to file: %s\niterations of maxcut algorithm: %d\nQVoffset: %d\n\n",fragfile,varfile,hapfile,maxiter,QVoffset); 	
-			maxcut_haplotyping(fragfile,varfile,0,hapfile,maxiter); 
+			if (return maxcut_haplotyping(fragfile,varfile,0,hapfile,maxiter) < 0) return -1; 
 		}
 	}
 	return 0;
