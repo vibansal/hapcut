@@ -49,6 +49,7 @@ variant_id haplotype_1 haplotype_2 chromosome position refallele variantallele g
 
 	MEC_variant: reduction in the MEC score of the current assembled haplotypes by removing this variant. High value of MEC_variant indicates that the variant is either not a real variant or that the variant is not heterozygous. Variants for which delta >=3 and MEC_variant is >=2 are flagged as "FV". 
 
+The output of HapCut can be combined with the original input VCF to produce a phased VCF using [fgbio's HapCutToVcf tool](https://github.com/fulcrumgenomics/fgbio).
 
 
 Running the program:
