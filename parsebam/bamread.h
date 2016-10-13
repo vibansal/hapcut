@@ -12,6 +12,7 @@
 extern int QVoffset;
 extern int MINQ;
 extern int MISSING_QV;
+extern int BARCODE;
 
 extern char INT_CIGAROP[];
 
@@ -34,6 +35,7 @@ struct alignedread
 	int findex; // index in array of fragments
 	int mateindex; // index in array of reads of mate
 	int blockid; int cluster; 
+	char* barcode;
 
 };
 

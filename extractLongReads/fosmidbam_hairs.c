@@ -22,7 +22,7 @@
 #include "GC_repeat_analysis.c"
 #include "analyze_clusters.c"
 //#include "cluster_simple.c"
-#include "sissor-code.c"
+#include "sc-code.c"
 
 
 // dynamic programming backtracking to find best segmentation 
@@ -76,7 +76,7 @@ double calculate_bg_density(struct FOSMID* fosmidlist,int fosmids,struct BLOCK_R
                 //fprintf(stderr,"blocks %d .... %d \n",fosmidlist[i].lastblock,fosmidlist[i+1].firstblock);
                 for (k=fosmidlist[i].lastblock+1;k<fosmidlist[i+1].firstblock;k++)
                 {
-                        if (RL[k].valid != '0') { bg_reads += RL[k].reads; bg_bins += 1; } // this is using reads while sissor uses peaks 
+                        if (RL[k].valid != '0') { bg_reads += RL[k].reads; bg_bins += 1; } // this is using reads while sc uses peaks 
                 }
         }
         fprintf(stdout,"detected %d fosmid segments bgreads %0.0f %0.0f rd(perblock):%0.5f genome-cov %d frac %0.4f\n",fosmids,bg_reads,bg_bins,bg_reads/(bg_bins),genome_covered,(double)genome_covered/blocks);
@@ -169,7 +169,7 @@ int dynamic_programming_loop(struct BLOCK_READ* RL,int blocks,int* BL,int validb
         double block_open_penalty_2 = (block_open_penalty+length_penalty)/3;
         double fragment_p = block_open_penalty; double fragment_p_1 = log(1.0-exp(fragment_p)); 
 
-	double estimates[3]; estimate_parameters_sissor(RL,blocks,estimates); fprintf(stderr,"estimating init parameters\n");
+	double estimates[3]; estimate_parameters_sc(RL,blocks,estimates); fprintf(stderr,"estimating init parameters\n");
 
         score0 = RL[BL[i]].reads*(logRD + log_sizes[(int)RL[BL[i]].adjusted_size]-log(RL[BL[i]].GC_corr))-read_density*(float)RL[BL[i]].adjusted_size/(BLOCK_SIZE*RL[BL[i]].GC_corr);
 
@@ -288,7 +288,7 @@ int process_reads_chrom(struct alignedread** readlist,int s,int e,FRAGMENT* flis
 	struct FOSMID* fosmidlist = calloc(100000,sizeof(struct FOSMID)); 
 
 	// dynamic programming loop for main code 	
-	if (FOSMIDS ==2) dynamic_programming_sissor(RL, blocks, BL,validblocks,read_density_global,block_open_penalty);
+	if (FOSMIDS ==2) dynamic_programming_sc(RL, blocks, BL,validblocks,read_density_global,block_open_penalty);
 	else dynamic_programming_loop(RL,blocks,BL,validblocks,read_density_global,block_open_penalty,length_penalty);
 
 	// call function to DP backtracking to find optimal segmentation 
