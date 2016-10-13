@@ -251,13 +251,8 @@ int generate_single_fragment(struct alignedread** readlist,FRAGMENT* flist,VARIA
 			counts[(int)fragment.alist[i].allele-48+2] += (int)fragment.alist[i].qv-QVoffset; 
 		}
 	}
-	/*
-	*/
 	fprintf(stdout,"fragment %d %d \n",unique_variants,j);
 	fp.id = (char*)malloc(1024); 
-	//if (GROUPNAME != NULL) sprintf(fp.id,"%s:%s:%d_%d_%d_%0.1f",GROUPNAME,varlist[fp.alist[0].varid].chrom,readlist[s].position,readlist[e-1].position,length,read_density);
-	//else sprintf(fp.id,"%s:%d_%d_%d_%0.2f",varlist[fp.alist[0].varid].chrom,readlist[s].position,readlist[e-1].position,length,read_density);
-	//sprintf(fp.id,"%s:%d_%d_%d_%0.2f_%d",varlist[fp.alist[0].varid].chrom,readlist[s]->position,readlist[e-1]->position,length,read_density,reads_window);
 	if (BARCODE ==1) sprintf(fp.id,"%s:%d_%d_%d_%0.2f_%d_%s",varlist[fp.alist[0].varid].chrom,start,end,length,read_density,reads_window,readlist[s]->barcode);
 	else sprintf(fp.id,"%s:%d_%d_%d_%0.2f_%d",varlist[fp.alist[0].varid].chrom,start,end,length,read_density,reads_window);
 	

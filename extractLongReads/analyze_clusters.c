@@ -1,11 +1,3 @@
-// likelihood of segment is e^(-l)l^r/r! summed over bins here 'l' is the mean read density (can be user provided) | r! is constant and can be ignored...
-// L(s,e,l) = r_i. log(l.correction) - l.correction
-// RL[i].W = adjusted_size(mappability)/(GC)*BLOCK_SIZE, ideally this should be 1 but can be less or more 
-
-
-// this function is not correct since it does not use GC.correction 
-
-// k! is missing -> we get both positive and negative likelihood values...
 // RL[i].W incorporates GC correction 
 double segment_likelihood(struct BLOCK_READ* RL, int* BL,int fb,int lb,double* log_sizes,double PARAMS[]) // first block .... last block
 {

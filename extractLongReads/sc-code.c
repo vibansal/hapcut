@@ -109,13 +109,6 @@ int estimate_parameters_sc(struct BLOCK_READ* RL,int blocks,double estimates[])
 }
 
 
-// mean = 200/ 3600 = 1/18 -> beta distribution... 
-// B(x,y) = (x-1)! (y-1)! / (x+y-1)! 
-// likelihood (k peaks | n, a,b) = C(n,k) B(k+a,n-k+b) / B(a,b) = (k+a-1)! x (n-k+b-1)! / (n+a+b-1)!  X term_computed / constant 
-// mean = na/(a+b)
-// problem is due to N(c,r) factor that has been added.... for background this factor is not there....  !!  
-// use peak variable for all calculations..
-
 double fact(int n) { int i=0; double ncr = 0.0; for (i=1;i<=n;i++) ncr += log(i); return ncr; } 
 
 int dynamic_programming_sc(struct BLOCK_READ* RL,int blocks,int* BL,int validblocks,double read_density,double block_open_penalty)
@@ -146,15 +139,11 @@ int dynamic_programming_sc(struct BLOCK_READ* RL,int blocks,int* BL,int validblo
 	fprintf(stderr,"inside DP loop for single cell MDA data, penalties Long-gaps %f perkb %f small-gaps %f %f %f beta priors: %d,%d\n",logRD,logRD+log(1000.0/BLOCK_SIZE),log_ld,intra_frag_gap,inter_frag_gap,a_b,b_b);
 	//for (i=0;i<validblocks;i++) RL[BL[i]].peak = RL[BL[i]].reads; 
 
-	// assume that mean segment length for background fragment is '1' -> likelihood term is -1.seglength + log(lambda) | lambda= 1 
 	i = 0; 
 	if (RL[BL[i]].peak >=1) score0 = logRD; else score0 = logRD1; if (USE_SL ==1) score0 -= RL[BL[i]].peak;
         RL[BL[i]].bscore[0] = score0;  // score if this block is outside fragments
         RL[BL[i]].W = 1;
 
-	// reads is # of segments, lambda is sum of segment lengths, used to calculate mean segment length 
-	// prior on # of segments per fragment and mean segment length is needed to avoid breaking
-	// filter on # of segments is incorrect... 
 
         for (i=1;i<validblocks;i++)
         {

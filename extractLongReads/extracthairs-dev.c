@@ -1,6 +1,5 @@
 
 
-
 /* program to extract haplotype fragments from dilution pool sequencing, author Vikas Bansal */
 /* main code is in file fosmidbam_hairs.c */
 /* this code can easily be merged with extracthairs.c since it calls a different function and arguments are same */
@@ -110,9 +109,6 @@ int init_fastafile(char* fastafile,REFLIST* reflist)
         return 1;
 }
 
-// ~/CODE/JOINTCODE-coral/hapCUT-dev/hapcut-fosmid/extractFOSMID --bam /media/drive2/Haplotyping/NA12878-SOLID-fosmid/aligned-bams/pool_SPA1.novoalign.sorted.bam --VCF /media/drive2/Haplotyping/NA12878-SOLID-fosmid/NA12878.1KG.2010_03.vcf.hets --fosmid 1  --ref ~/Public/tools/reference-genomes/1000genomes-huref/human_b36_male.fa --bed pool_SPA1.targetcut.bed --out SPA1.fragments > SPA1.log
-// ~/CODE/JOINTCODE-coral/hapCUT-dev/hapcut-fosmid/extractFOSMID --bam NA12878.chr20.bam  --VCF NA12878_phased_variants.vcf.chr20 --bed NA12878.chr20.molecules.bed --ref ~/Public/tools/reference-genomes/hg19.geuvadis.new.fa --barcode 1 --out t.frag > t
-// not working for barcodes... aug 26 2016 
 // interval list is sorted by start positions 
 // BAM header reference should be same as input reference fasta !! not enforced in original extractHAIRS | very IMPORTANT 
 // new function added 08/26/16, print haplotype fragments using list of intervals from bedfile
@@ -166,7 +162,6 @@ void init_bamfile_index(char* bamfile,samfile_t *fp,char* regions,bam_index_t *i
 }
 
 // process all reads for a single chromosome since calculation of read-density requires data... 
-// readlist is too big,not cleaned up after every chromosome... done 02/11/2014 
 // extract haplotype informative reads from sorted bam file // 
 int parse_bamfile_fosmid(char* bamfile,HASHTABLE* ht,CHROMVARS* chromvars,VARIANT* varlist,REFLIST* reflist,char* maskfile)
 {
@@ -344,11 +339,11 @@ int parse_bamfile_fosmid(char* bamfile,HASHTABLE* ht,CHROMVARS* chromvars,VARIAN
 
 int main (int argc, char** argv)
 {
-	char bamfile[1024]; strcpy(bamfile,"/media/drive2/Haplotyping/NA12878-SOLID-fosmid/aligned-bams/pool_SPA1.novoalign.sorted.bam"); 
-	char variantfile[1024]; strcpy(variantfile,"/media/drive2/Haplotyping/NA12878-SOLID-fosmid/NA12878.hg18.snps.vcf.hets");
-	char fastafile[1024]; strcpy(fastafile,"/home/vbansal/Public/tools/reference-genomes/1000genomes-huref/human_b36_male.fa");
-	char maskfile[1024]; strcpy(maskfile,"/media/drive2/Haplotyping/genome-mask/hg18-50bp-files/hg18.50bp.mask.fa"); 
-	char bedfile[1024]; strcpy(maskfile,"None"); // for intervals 
+	char bamfile[1024]; 
+	char variantfile[1024]; 
+	char fastafile[1024]; 
+	char maskfile[1024]; 
+	char bedfile[1024]; 
 
 	int readsorted = 0;
 	char* sampleid = (char*)malloc(1024); sampleid[0] = '-'; sampleid[1] = '\0';
@@ -414,8 +409,6 @@ int main (int argc, char** argv)
 	VARIANT* varlist;
 	int chromosomes=0;
 
-	// if we can modify code to extract subset of VCF file corresponding to --regions, it would make processing individual chromosomes much simpler... 
-	// easily done in python rather than VCF... 
 	if (VCFformat ==1)
 	{
 		variants = count_variants(variantfile,sampleid,&samplecol); 

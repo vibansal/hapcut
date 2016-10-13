@@ -1,18 +1,3 @@
-// ./extractFOSMID --bam /media/drive2/Haplotyping/NA12878-SOLID-fosmid/aligned-bams/pool_SPA1.novoalign.sorted.bam --VCF /media/drive2/Haplotyping/NA12878-SOLID-fosmid/NA12878.1KG.2010_03.vcf.hets --fosmid 1 --out SPA1.out > SPA1.log
-
-// gives distribution of fragment lengths of singletons... useful for 2nd pass to merge fragments | can be done in main code or separately... 
-// grep frags:1 SPA2.log | sed 's/W://g' | awk '{ l[int(($4)/2000)]++; } END { for (x in l) { if (l[x] >=2) print x*2000,l[x]; } }' | sort -k 1,1g
-// grep frags: SPA2.log | sed 's/frags://g' | awk '{ print $2; }' | sort -k 1,1 | uniq -c  | sort -k2,2g
-
-// fragment is only output if score of fragment > background + delta (10^3)
-// GC correction is only being applied to background ll calc ?? 
-// use bimodal distribution of inter-read distances to infer initial parameters: read-density... etc 
-// fragment_p_1 is probably causing block penalty to be different... log(1-p) applied to empty blocks 
-                
-
-// number of paramters that control segmentation..
-// while ((BL[i]-BL[j]) < (int)(MAX_ISLAND_LENGTH/BLOCK_SIZE) && BL[j] > 0 && eb*BLOCK_SIZE < 10000) // segfault if we set BL[j] >= 0 
-//if (reads >= 8 && ws_corrected >= 1000 && mean/W >= 0.05) // extra conditions to consider it a valid segment...
 
 #include<stdint.h>
 
@@ -38,7 +23,6 @@ int find_best_segmentation(struct BLOCK_READ* RL,int* BL,int validblocks,struct 
 
 		if (j < i-1) // (j-i) is a haplotype fragment
 		{
-			//fprintf(stderr,"empty block %d %d \n",BL[i],BL[j]); // this corresponds to the blocks not included in segmentation...
 			//if (VERBOSE ==2) print_block(RL,BL,i,j,flag,refflag,block0_start); 
 			// need to add code to add windows ignored due to GC content but adjacent to valid islands 
 			// find the first non-empty window 
