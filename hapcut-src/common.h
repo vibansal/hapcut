@@ -61,7 +61,7 @@ struct SNPfrags
 				// changed on feb 1 2012 to be pointers (char* id, char* chrom)
 				char* genotypes; // VCF genotypes 0|1 1|0 or 0/1 added feb 1 2012 
 				float L00,L01,L10,L11,Lnovar; // change in likelihood if this SNP is made homozygous or removed
-				float rMEC;
+				float rMEC,MEC00,MEC11,MEC01;
 				int R0,R1; // counts of bases supporting allele0 and allele1
 
 				// added on april 24 2012 for singleton reads

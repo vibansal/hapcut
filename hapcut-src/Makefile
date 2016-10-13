@@ -2,7 +2,7 @@ CC=gcc -Wall -D_GNU_SOURCE
 CFLAGS=-c -Wall
 
 HAPCUT: fragmatrix.o readinputfiles.o pointerheap.o hapcut.c find_maxcut.c
-	$(CC) fragmatrix.o readinputfiles.o  pointerheap.o -o HAPCUT -lm hapcut.c
+	$(CC) -g fragmatrix.o readinputfiles.o  pointerheap.o -o HAPCUT -lm hapcut.c
 
 
 HAPCUT-1: fragmatrix.o readinputfiles.o pointerheap.o annealing.o hapcut-annealing.c 

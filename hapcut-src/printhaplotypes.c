@@ -12,6 +12,7 @@ void print_hapcut_options()
 	fprintf(stderr,"--output <FILENAME> : file to which phased haplotype segments/blocks will be output | the program will write best current haplotypes to this file after every 10 iterations\n");
 	fprintf(stderr,"--maxiter <int> : maximum number of global iterations for HAPCUT, default is 100\n");
 	fprintf(stderr,"--qvoffset <33/48/64> : quality value offset for base quality scores, default is 33 (use same value as for extracthairs)\n");
+	fprintf(stderr,"--mbq : minimum quality value for base quality scores (base-calls with quality score below this will not be used), default is 10\n");
 	fprintf(stderr,"--maxcutiter <int> : maximum number of iterations to find max cut for each haplotype block in a given iteration, default value is 100 | if this is set to -1, the number of iterations = N/10 where N is the number of nodes in the block\n");
 	fprintf(stderr,"--longreads <0/1> : set to 1 for phasing long read data if program uses too much memory, default is 0\n");
 	fprintf(stderr,"--fosmids <0/1> : set to 1 for phasing fosmid pooled sequencing data, default is 0\n");
@@ -26,6 +27,36 @@ void print_hapcut_options()
 	
 }
 
+// print the matrix such that fragments are aligned by columns
+int print_matrix(struct BLOCK* clist,int blocks,char* h1,struct fragment* Flist,char* outfileprefix)
+{
+	fprintf(stderr,"printing fragment matrix along with MEC scores to a file \n");
+        char outfile[1024]; sprintf(outfile,"%s.fragmatrix",outfileprefix);
+        FILE* fp = fopen(outfile,"w");
+	
+	int i=0,j=0,f=0,t=0,k=0,prev=0; char c,c1,c2;
+	for (i=0;i<blocks;i++)
+	{
+		fprintf(fp,"BLOCK: offset: %d len: %d phased: %d fragments %d MEC %f\n",clist[i].offset+1,clist[i].length,clist[i].phased,clist[i].frags,clist[i].MEC); 	
+		fprintf(fp,"%20s ","haplotype"); for (k=clist[i].offset;k<clist[i].offset + clist[i].length;k++) fprintf(fp,"%c",h1[k]); fprintf(fp,"\n");
+		for (j=0;j<clist[i].frags;j++)
+		{
+			f = clist[i].flist[j]; prev = clist[i].offset; 
+			fprintf(fp,"%20s ",Flist[f].id); 	
+			for (t=0;t<Flist[f].blocks;t++)
+			{
+				for (k=prev;k<Flist[f].list[t].offset;k++) fprintf(fp,"-");
+				for (k=0;k<Flist[f].list[t].len;k++) fprintf(fp,"%c",Flist[f].list[t].hap[k]); 
+				prev = Flist[f].list[t].offset + Flist[f].list[t].len; 
+			}		
+			for (k=prev;k<clist[i].offset+clist[i].length;k++) fprintf(fp,"-"); 
+			fprintf(fp,"\n");
+		}
+		fprintf(fp,"\n****************************\n");
+	}
+        fclose(fp);
+}
+
 int print_hapfile(struct BLOCK* clist,int blocks,char* h1,struct fragment* Flist,int fragments,struct SNPfrags* snpfrag, char* fname,int score,char* outfile)
 {
 	// print a new file containing one block phasing and the corresponding fragments 
@@ -33,6 +64,8 @@ int print_hapfile(struct BLOCK* clist,int blocks,char* h1,struct fragment* Flist
 	//char fn[200]; sprintf(fn,"%s-%d.phase",fname,score); 
 	FILE* fp; 		 fp = fopen(outfile,"w");
 	float delta =0;
+	float reduction_MEC_homozygous = 0; 
+	float mdelta = 0.5; 
 
 	for (i=0;i<blocks;i++)
 	{
@@ -66,6 +99,10 @@ int print_hapfile(struct BLOCK* clist,int blocks,char* h1,struct fragment* Flist
 				}
 				fprintf(fp,"%s\t%d\t%s\t%s\t%s\t%d,%d:%0.1f,%0.1f,%0.1f:%0.1f:%0.1f",snpfrag[t].chromosome,snpfrag[t].position,snpfrag[t].allele0,snpfrag[t].allele1,snpfrag[t].genotypes,snpfrag[t].R0,snpfrag[t].R1,snpfrag[t].L00,snpfrag[t].L01,snpfrag[t].L11,delta,snpfrag[t].rMEC); 
 				if (delta >= 3 && snpfrag[t].rMEC >= 2) fprintf(fp,":FV"); 
+				if (snpfrag[t].MEC00 < snpfrag[t].MEC01-mdelta) fprintf(fp," MEC00 %0.2f %0.2f %0.2f",snpfrag[t].MEC00,snpfrag[t].MEC11,snpfrag[t].MEC01);
+				else if (snpfrag[t].MEC11 < snpfrag[t].MEC01-mdelta) fprintf(fp," MEC11 %0.2f %0.2f %0.2f",snpfrag[t].MEC11,snpfrag[t].MEC00,snpfrag[t].MEC01);
+				if (snpfrag[t].MEC00 < snpfrag[t].MEC01-mdelta) reduction_MEC_homozygous += snpfrag[t].MEC01-snpfrag[t].MEC00;
+				else if (snpfrag[t].MEC11 < snpfrag[t].MEC01-mdelta) reduction_MEC_homozygous += snpfrag[t].MEC01- snpfrag[t].MEC11;
 
 				// print genotype read counts and likelihoods
 				if (snpfrag[t].G00 < 0 || snpfrag[t].G01 < 0 || snpfrag[t].G11 < 0) fprintf(fp,"\t%d,%d:%0.1f,%0.1f,%0.1f\n",snpfrag[t].A0,snpfrag[t].A1,snpfrag[t].G00,snpfrag[t].G01,snpfrag[t].G11);
@@ -77,6 +114,8 @@ int print_hapfile(struct BLOCK* clist,int blocks,char* h1,struct fragment* Flist
 		if (i < blocks-1) fprintf(fp,"******** \n");
 	}
 	fclose(fp);
+	fprintf(stderr,"reduction in MEC score due to false heterozygous variants is %f \n",reduction_MEC_homozygous);
+
 	return 1;
 }
 

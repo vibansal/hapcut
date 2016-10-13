@@ -1,4 +1,8 @@
 
+March 15 2016 
+
+modified extracthairs to handle = cigar operations.
+
 July 2015 
 
 reorganized code: (1) extracthairs.c code is in separate directory 'parsebam' 

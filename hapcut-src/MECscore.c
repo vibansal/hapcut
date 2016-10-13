@@ -1,4 +1,57 @@
 
+// function calculates both MEC likelihood and chimeric fragment likelihood 
+void calculate_fragscore(struct fragment* Flist,int f, char* h,float* mec_ll,float* chimeric_ll)
+{
+	int j=0,k=0; float p0=0,p1=0,prob =0,prob1=0,prob2=0; float chim_prob = -1000000;
+	int bit = 0,bits=0;
+
+	for (j=0;j<Flist[f].blocks;j++)
+	{
+		for (k=0;k<Flist[f].list[j].len;k++)
+		{
+			if (h[Flist[f].list[j].offset+k] == '-' || (int)Flist[f].list[j].qv[k] -QVoffset < MINQ) continue; 
+			prob = QVoffset-(int)Flist[f].list[j].qv[k]; prob /= 10; prob1 = 1.0; prob1 -= pow(10,prob); prob2 = log10(prob1);
+			if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) { p0 += prob2; p1 +=  prob; } else { p0 += prob; p1 += prob2; }
+			bit +=1;  // counter over the alleles of the fragment, ignore invalid alleles 
+		}
+	}
+	bits = bit; bit = 0;
+
+	if (bits > 2) 
+	{
+		for (j=0;j<Flist[f].blocks;j++)
+		{
+			for (k=0;k<Flist[f].list[j].len;k++)
+			{
+				if (h[Flist[f].list[j].offset+k] == '-' || (int)Flist[f].list[j].qv[k] -QVoffset < MINQ) continue; 
+				prob = QVoffset-(int)Flist[f].list[j].qv[k]; prob /= 10; prob1 = 1.0; prob1 -= pow(10,prob); prob2 = log10(prob1);
+				
+				if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) 
+				{ 
+					p0 -= prob2; p0 += prob; 
+					p1 -=  prob; p1 += prob2; 
+				}
+				else 
+				{ 
+					p0 -= prob; p0 += prob2;
+					p1 -= prob2; p1 += prob;
+				}
+				if (bit > 0 && bit < bits-1) // add the switch error likelihood to chim_prob
+				{
+					if (p0 > chim_prob) chim_prob = p0 + log10(1.0+pow(10,chim_prob-p0)); else chim_prob += log10(1.0+pow(10,p0-chim_prob)); 
+					if (p1 > chim_prob) chim_prob = p1 + log10(1.0+pow(10,chim_prob-p1)); else chim_prob += log10(1.0+pow(10,p1-chim_prob)); 
+				}
+				bit +=1;  
+			}
+		}
+		chim_prob -= log10(bits-2); 
+	}
+	*chimeric_ll = chim_prob; 
+
+	if (p0 > p1) *mec_ll =  (p0 + log10(1+pow(10,p1-p0))); else *mec_ll =  (p1 + log10(1+pow(10,p0-p1)));
+	//return mec_prob; 
+}
+
 // function to compute weight of a edge between two variants in the max-cut graph (score of +1 if the phasing agrees with the phasing suggested by the fragment and score of -1 if it does not)
 // this function needs to be modified to utilize base-quality scores, so that the weight of an edge is (1-e1)(1-e2) for the two base-calls
 float edge_weight(char* hap,int i, int j, char* p,struct fragment* Flist,int f) 
@@ -119,6 +172,8 @@ void update_fragscore(struct fragment* Flist,int f, char* h)
 	}
 }
 
+// change this to function that calculates posterior probability of fragment being HAP1, HAP2, HAP1:HAP2, HAP2:HAP1 etc ....
+
 // function to print comparison of fragment to haplotype | format is 45333 000:010:BAF  (fragment block):(hap block):(qscore block)
 int print_fragment_MEC(struct fragment* Flist,int f,char* h,FILE* outfile)
 {
@@ -147,9 +202,14 @@ int print_fragment_MEC(struct fragment* Flist,int f,char* h,FILE* outfile)
 	}
 	if (good < bad) { mec = good; hap = 0; } else { mec = bad; hap = 1; } 
 
-	if (mec <=0.001) return 0;
-	fprintf(outfile,"MEC %0.1f %d %d %s ",mec,switches,Flist[f].blocks,Flist[f].id); 
+	float mec_ll,chimeric_ll; calculate_fragscore(Flist,f,h,&mec_ll,&chimeric_ll);
+	//if (mec <=0.001) return 0;
+	if (chimeric_ll >= mec_ll+3) fprintf(outfile,"SER "); else fprintf(outfile,"MEC ");
+	//if (mec > 1.99 && switches ==1) fprintf(outfile,"SER "); else fprintf(outfile,"MEC ");
+	fprintf(outfile,"%0.2f %0.2f ",mec_ll,chimeric_ll); 
+	fprintf(outfile,"%0.1f %d %d %s ",mec,switches,Flist[f].blocks,Flist[f].id); 
 	fprintf(outfile,"%d ",Flist[f].list[0].offset); 
+
 
 	for (j=0;j<Flist[f].blocks;j++) 
 	{
@@ -182,3 +242,5 @@ void print_fragmentmatrix_MEC(struct fragment* Flist,int fragments,char* h,char*
 	for (i=0;i<fragments;i++) print_fragment_MEC(Flist,i,h,fp); 
 	fclose(fp);
 }
+
+

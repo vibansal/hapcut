@@ -47,6 +47,38 @@ float calculate_reduction_mecscore(struct fragment* Flist,int f, char* h,int var
 }
 
 
+// calculate how much is MEC score reduced by changing genotype to 00 or 11 instead of 0/1 | added July 21 2015 
+void calculate_mecscore_homozygous(struct fragment* Flist,int f, char* h,int variant,float* scores)
+{
+	int j=0,k=0; float good=0,bad=0; float prob =0,prob1=0,origscore=0,newscore00 =0,newscore11=0; 
+	float good00=0,bad00=0,good11=0,bad11=0;
+	for (j=0;j<Flist[f].blocks;j++)
+	{
+		for (k=0;k<Flist[f].list[j].len;k++)
+		{
+			if (h[Flist[f].list[j].offset+k] == '-') continue;// { fprintf(stdout,"fragment error"); continue;}
+			if ((int)Flist[f].list[j].qv[k] -QVoffset < MINQ) continue; 
+			prob = QVoffset-(int)Flist[f].list[j].qv[k]; prob /= 10; prob1 = 1.0 - pow(10,prob);
+			if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) good +=prob1; else bad +=prob1;
+			if (Flist[f].list[j].offset+k != variant) 
+			{
+				if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) good00 +=prob1; else bad00 +=prob1;
+				if (h[Flist[f].list[j].offset+k] == Flist[f].list[j].hap[k]) good11 +=prob1; else bad11 +=prob1;
+			}
+			else
+			{
+				if (Flist[f].list[j].hap[k] != '0') { good00 +=prob1; bad00 +=prob1; } 
+				if (Flist[f].list[j].hap[k] != '1') { good11 +=prob1; bad11 +=prob1; } 
+			}
+		}
+	}
+	if (good < bad) origscore = good; else origscore = bad;
+	if (good00 < bad00) newscore00 = good00; else newscore00 = bad00;
+	if (good11 < bad11) newscore11 = good11; else newscore11 = bad11;
+	scores[2] = origscore; scores[0] = newscore00; scores[1]= newscore11; 
+}
+
+
 // variant can be homozygous reference, homozygous alternate, or het (0/0, 1/1, 0|1, 1|0) or due to copy number polymorphism (0|0|1, 0|1|1) 
 // calculate delta in log-likelihood on removal of a variant from connected component
 // also calculate the impact on the likelihood if the variant is removed altogether, don't care.... 
@@ -58,7 +90,11 @@ float evaluate_variant(struct fragment* Flist,int fragments,struct SNPfrags* snp
 	float prob = 0.0,prob1=0.0;
 	float L01 = 0, L00 =0,L11=0,Lnovar=0;
 	int R0=0,R1=0;
+	float scores[3] = {0,0,0}; 
 	snpfrag[v].rMEC = 0; // reduction in MEC score if we remove this variant altogether
+	snpfrag[v].MEC00 = 0; snpfrag[v].MEC11 = 0; // reduction in MEC score if we change genotype to 00 or 11 respectively 
+	snpfrag[v].MEC01 =0; // original het MEC score for all fragments covering this variant
+
 	snpfrag[v].G00 = 0; snpfrag[v].G01 = 0; snpfrag[v].G11 = 0; snpfrag[v].A0 = 0; snpfrag[v].A1=0;
 	//float LOG2 = log10(0.5); LOG2 =0;
 
@@ -86,6 +122,7 @@ float evaluate_variant(struct fragment* Flist,int fragments,struct SNPfrags* snp
 		}
 
 		snpfrag[v].rMEC += calculate_reduction_mecscore(Flist,j,HAP1,v);
+		calculate_mecscore_homozygous(Flist,j,HAP1,v,scores); snpfrag[v].MEC00 += scores[0]; snpfrag[v].MEC11 += scores[1]; snpfrag[v].MEC01 += scores[2]; 
 
 		Forig1=0,Forig2 =0, Fnew1 = 0, Fnew2=0,Fnew3=0,Fnew4=0, Fnew5=0,Fnew6=0;
 		for (t1=0;t1<Flist[j].blocks;t1++)
