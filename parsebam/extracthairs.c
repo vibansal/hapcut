@@ -111,7 +111,7 @@ int parse_bamfile_sorted(char* bamfile,HASHTABLE* ht,CHROMVARS* chromvars,VARIAN
 	int prevchrom=-1; int prevtid = -1;
 
 	FRAGMENT* flist = (FRAGMENT*)malloc(sizeof(FRAGMENT)*MAXFRAG); int fragments =0; int prevfragments =0;
-	FRAGMENT fragment; fragment.variants =0; fragment.alist = (allele*)malloc(sizeof(allele)*4096);
+	FRAGMENT fragment; fragment.variants =0; fragment.alist = (allele*)malloc(sizeof(allele)*16184); // increased size here to avoid overflow
 
 	samfile_t *fp;
 	if ((fp = samopen(bamfile, "rb", 0)) == 0) { fprintf(stderr, "Fail to open BAM file %s\n", bamfile); return -1; }
