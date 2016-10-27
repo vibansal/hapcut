@@ -1,4 +1,6 @@
-HAPCUT, version 0.7, Vikas Bansal (vbansal@scripps.edu), last modified: March 25 2014
+HAPCUT, version 0.7, Vikas Bansal (vbansal@ucsd.edu), last modified: March 25 2014
+
+HapCUT2 is now available from https://github.com/pjedge/hapcut2
 
 ## Introduction
 
