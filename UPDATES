@@ -1,4 +1,8 @@
 
+May 31 2017 
+
+fixed bug for overlapping PE reads (SINGLEREADS =1 option not working correctly, simple fix in hapfragments.c) 
+
 March 15 2016 
 
 modified extracthairs to handle = cigar operations.
