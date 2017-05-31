@@ -111,7 +111,7 @@ int print_matepair(FRAGMENT* f1, FRAGMENT* f2,VARIANT* varlist,FILE* outfile)
 void clean_fragmentlist(FRAGMENT* flist,int* fragments,VARIANT* varlist,int currchrom,int currpos,int prevchrom)
 {			
 	int i=0,j=0,k=0,first=0,sl=0;
-	FRAGMENT fragment; fragment.variants =0; fragment.alist = (allele*)malloc(sizeof(allele)*4096);
+	FRAGMENT fragment; fragment.variants =0; fragment.alist = (allele*)malloc(sizeof(allele)*16184);
 	if (*fragments > 1) qsort(flist,*fragments,sizeof(FRAGMENT),compare_fragments);
 	// sort such that mate pairs are together and reverse sorted by starting position of second read in a mate-piar
 	//for (i=0;i<*fragments;i++) fprintf(stdout,"frag %s %d vars %d \n",flist[i].id,flist[i].alist[0].varid,flist[i].variants);
@@ -133,7 +133,7 @@ void clean_fragmentlist(FRAGMENT* flist,int* fragments,VARIANT* varlist,int curr
 				//fprintf(stdout,"mate-pair %s %s %s\n",flist[i].id);
 				if (flist[i].alist[flist[i].variants-1].varid < flist[i+1].alist[0].varid) print_matepair(&flist[i],&flist[i+1],varlist,fragment_file);
 				else if (flist[i+1].alist[flist[i+1].variants-1].varid < flist[i].alist[0].varid) print_matepair(&flist[i+1],&flist[i],varlist,fragment_file);
-				else if (flist[i].variants+flist[i+1].variants > 2)
+				else if (flist[i].variants+flist[i+1].variants >= 2)
 				{
 					j=0;k=0; fragment.variants =0;
 					while (j < flist[i].variants || k < flist[i+1].variants)
@@ -184,7 +184,7 @@ void clean_fragmentlist(FRAGMENT* flist,int* fragments,VARIANT* varlist,int curr
 						}
 						else { j++;k++;  } 
 					}
-					if (fragment.variants >= 2) 
+					if (fragment.variants >= 2 || SINGLEREADS ==1) 
 					{
 						sl = strlen(flist[i].id); fragment.id = (char*)malloc(sl+1);
 						for (j=0;j<sl;j++) fragment.id[j] = flist[i].id[j]; fragment.id[j] = '\0';
