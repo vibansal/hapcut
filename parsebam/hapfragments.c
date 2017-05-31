@@ -133,7 +133,7 @@ void clean_fragmentlist(FRAGMENT* flist,int* fragments,VARIANT* varlist,int curr
 				//fprintf(stdout,"mate-pair %s %s %s\n",flist[i].id);
 				if (flist[i].alist[flist[i].variants-1].varid < flist[i+1].alist[0].varid) print_matepair(&flist[i],&flist[i+1],varlist,fragment_file);
 				else if (flist[i+1].alist[flist[i+1].variants-1].varid < flist[i].alist[0].varid) print_matepair(&flist[i+1],&flist[i],varlist,fragment_file);
-				else if (flist[i].variants+flist[i+1].variants >= 2)
+				else if (flist[i].variants+flist[i+1].variants > 2)
 				{
 					j=0;k=0; fragment.variants =0;
 					while (j < flist[i].variants || k < flist[i+1].variants)
@@ -184,7 +184,7 @@ void clean_fragmentlist(FRAGMENT* flist,int* fragments,VARIANT* varlist,int curr
 						}
 						else { j++;k++;  } 
 					}
-					if (fragment.variants >= 2 || SINGLEREADS ==1) 
+					if (fragment.variants >= 2) 
 					{
 						sl = strlen(flist[i].id); fragment.id = (char*)malloc(sl+1);
 						for (j=0;j<sl;j++) fragment.id[j] = flist[i].id[j]; fragment.id[j] = '\0';
@@ -197,6 +197,8 @@ void clean_fragmentlist(FRAGMENT* flist,int* fragments,VARIANT* varlist,int curr
 					}
 					
 				}
+				else if (flist[i].variants+flist[i+1].variants ==2 && SINGLEREADS ==1)print_fragment(&flist[i],varlist,fragment_file); // added 05/31/2017 for OPE
+				
 				//else if (flist[i].variants ==1 && flist[i+1].variants >1) print_fragment(&flist[i+1],varlist);
 				//else if (flist[i].variants > 1 && flist[i+1].variants ==1) print_fragment(&flist[i],varlist);
 				// april 27 2012 these PE reads were being ignored until now
