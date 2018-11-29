@@ -1,6 +1,7 @@
-HAPCUT, version 0.7, Vikas Bansal (vibansal@ucsd.edu), last modified: March 25 2014
+## Note that [HapCUT2](https://github.com/vibansal/hapcut2) has replaced hapCUT. It is faster and more accurate than HapCUT for all types of sequence data.
 
-HapCUT2 is now available from https://github.com/pjedge/hapcut2
+
+HAPCUT, version 0.7, Vikas Bansal (vibansal@ucsd.edu), last modified: March 25 2014
 
 ## Introduction
 
