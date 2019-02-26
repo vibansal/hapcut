@@ -3,8 +3,13 @@
 #include<stdlib.h>
 #include<string.h>
 #include<ctype.h>
+#include<time.h>
+#include<zlib.h>
 #include "readfasta.h"
 #define MAX_BUF_SIZE 4096
+
+#include "kseq.h"
+KSEQ_INIT(gzFile, gzread)
 
 // initialize the reflist datastructure
 REFLIST* init_reflist(char* fastafile,REFLIST* reflist)
@@ -202,25 +207,21 @@ int read_next_chromosome(REFLIST* reflist,int chrom,FILE* fp)
 }
 int read_fasta(char* seqfile, REFLIST* reflist)
 {
-	FILE* fp = fopen(seqfile,"r");
-	if (fp == NULL) { fprintf(stderr,"file %s not found \n",seqfile); return -1; }
+	clock_t t;
+	kseq_t *seq;
+	gzFile fp = gzopen(seqfile, "r");
+	seq = kseq_init(fp);
 	fprintf(stderr,"reading reference sequence file %s with %d sequences\n",seqfile,reflist->ns);
-	int i=-1,j=0; char c;
-	while (c != EOF)
-	{
-		c = fgetc(fp);
-		if (c == '>') 
-		{
-			while (c != '\n') c = fgetc(fp);
-			//if (i >= 0)printf("%c %d %d",c,i,j);
-			i++; j=0;
+	t = clock();
+	int i=0, j=0; char c;
+	while (kseq_read(seq) >= 0) {
+		memcpy(reflist->sequences[i], seq->seq.s, seq->seq.l);
+		for (j = 0; j < seq->seq.l; j++) {
+			reflist->sequences[i][j] = toupper(reflist->sequences[i][j]);
 		}
-		else if (c != '\n' && c != '\t' && c != ' ')
-		{
-			reflist->sequences[i][j] = toupper(c); j++;
-		}
+		i++;
 	}
-	fclose(fp);
+	gzclose(fp); fp=NULL;
 	for (i=0;i<reflist->ns;i++)
 	{
 		reflist->sequences[i][reflist->lengths[i]] = '\0';
@@ -231,6 +232,7 @@ int read_fasta(char* seqfile, REFLIST* reflist)
 			fprintf(stderr,"\n");
 		}
 	}
+	fprintf(stderr, "read FASTA in %.2f sec\n", (float)(clock() - t) / CLOCKS_PER_SEC);
 	return 1;
 }
 
